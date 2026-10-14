@@ -1,0 +1,639 @@
+
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <meta
+    name="description"
+    content="FinTrack — acompanhe suas receitas, despesas e metas financeiras."
+  >
+
+  <meta name="theme-color" content="#0b0d17">
+
+  <title>FinTrack | Finanças pessoais</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+  <link
+    href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap"
+    rel="stylesheet"
+  >
+
+  <link
+    rel="stylesheet"
+    href="{{ url_for('static', filename='style.css') }}"
+  >
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
+</head>
+
+<body>
+  <div class="app-shell">
+
+    <!-- MENU LATERAL -->
+    <aside class="sidebar">
+      <a class="brand" href="#overview" aria-label="FinTrack - Visão geral">
+        <span class="brand-icon">F</span>
+        <span>FinTrack</span>
+      </a>
+
+      <p class="nav-label">MENU PRINCIPAL</p>
+
+      <nav aria-label="Menu principal">
+        <a class="nav-item active" href="#overview">
+          <span aria-hidden="true">▦</span>
+          Visão geral
+        </a>
+
+        <a class="nav-item" href="#transactions">
+          <span aria-hidden="true">↔</span>
+          Transações
+        </a>
+
+        <a class="nav-item" href="#reports">
+          <span aria-hidden="true">▥</span>
+          Relatórios
+        </a>
+
+        <a class="nav-item" href="#goals">
+          <span aria-hidden="true">◎</span>
+          Metas financeiras
+        </a>
+      </nav>
+
+      <div class="sidebar-bottom">
+        <div class="tip-card">
+          <span class="tip-icon" aria-hidden="true">✦</span>
+
+          <strong>Pequenos passos, grandes metas.</strong>
+
+          <p>
+            Acompanhe seus hábitos e tenha mais clareza sobre seu dinheiro.
+          </p>
+        </div>
+
+        <span class="sidebar-caption">
+          FINTRACK • PROJETO DE PORTFÓLIO
+        </span>
+      </div>
+    </aside>
+
+    <!-- CONTEÚDO PRINCIPAL -->
+    <main class="main-content">
+
+    
+        <header class="topbar">
+  <div>
+    <p class="eyebrow">SEU RESUMO FINANCEIRO</p>
+    <h1>Visão geral</h1>
+    <p class="user-greeting">
+      Olá, <strong id="userName">usuário</strong>!
+    </p>
+  </div>
+
+  <div class="month-control">
+    <label for="monthFilter">Período</label>
+    <input
+      id="monthFilter"
+      type="month"
+      aria-label="Selecionar mês do resumo financeiro"
+    >
+  </div>
+
+  <a href="/logout" class="logout-button">Sair ↗</a>
+        </header>
+      
+      <!-- VISÃO GERAL -->
+      <section id="overview" aria-labelledby="overviewTitle">
+
+        <div class="welcome-row">
+          <div>
+            <h2 id="overviewTitle">
+              Seu dinheiro, em perspectiva<span class="accent">.</span>
+            </h2>
+
+            <p>
+              Confira o panorama das suas finanças neste mês.
+            </p>
+          </div>
+
+          <button
+            class="primary-button"
+            id="newTransactionBtn"
+            type="button"
+          >
+            ＋ Nova transação
+          </button>
+        </div>
+
+        <!-- CARTÕES DE RESUMO -->
+        <div class="summary-grid">
+
+          <article class="summary-card balance-card">
+            <div class="card-top">
+              <span>Saldo do mês</span>
+              <span class="card-symbol" aria-hidden="true">↗</span>
+            </div>
+
+            <strong id="balanceValue">R$ 0,00</strong>
+
+            <p>Receitas menos despesas</p>
+
+            <div class="mini-line" aria-hidden="true">
+              <span></span>
+              <span></span>
+              <span></span>
+              <span></span>
+              <span></span>
+              <span></span>
+              <span></span>
+            </div>
+          </article>
+
+          <article class="summary-card">
+            <div class="card-top">
+              <span>Receitas</span>
+              <span class="metric-icon income-icon" aria-hidden="true">↙</span>
+            </div>
+
+            <strong id="incomeValue">R$ 0,00</strong>
+
+            <p class="muted">Total recebido no mês</p>
+          </article>
+
+          <article class="summary-card">
+            <div class="card-top">
+              <span>Despesas</span>
+              <span class="metric-icon expense-icon" aria-hidden="true">↗</span>
+            </div>
+
+            <strong id="expensesValue">R$ 0,00</strong>
+
+            <p class="muted">Total gasto no mês</p>
+          </article>
+
+          <article class="summary-card">
+            <div class="card-top">
+              <span>Previsão de gastos</span>
+              <span class="metric-icon forecast-icon" aria-hidden="true">⌁</span>
+            </div>
+
+            <strong id="forecastValue">R$ 0,00</strong>
+
+            <p class="muted" id="forecastNote">
+              Estimativa pelo histórico
+            </p>
+          </article>
+
+        </div>
+      </section>
+
+      <!-- GRÁFICOS E RELATÓRIOS -->
+      <section class="charts-grid" id="reports" aria-label="Relatórios financeiros">
+
+        <article class="panel chart-panel">
+          <div class="panel-heading">
+            <div>
+              <h3>Despesas por categoria</h3>
+              <p>Entenda para onde vai seu dinheiro</p>
+            </div>
+          </div>
+
+          <div class="chart-wrap doughnut-wrap">
+            <canvas
+              id="categoryChart"
+              role="img"
+              aria-label="Gráfico de despesas por categoria"
+            ></canvas>
+
+            <div id="chartEmpty" class="chart-empty">
+              Adicione despesas para ver o gráfico.
+            </div>
+          </div>
+        </article>
+
+        <article class="panel chart-panel">
+          <div class="panel-heading">
+            <div>
+              <h3>Resumo do mês</h3>
+              <p>Comparação entre entradas e saídas</p>
+            </div>
+          </div>
+
+          <div class="chart-wrap">
+            <canvas
+              id="monthlyChart"
+              role="img"
+              aria-label="Gráfico de comparação entre receitas e despesas"
+            ></canvas>
+          </div>
+        </article>
+
+      </section>
+
+      <!-- TRANSAÇÕES -->
+      <section
+        class="panel transactions-panel"
+        id="transactions"
+        aria-labelledby="transactionsTitle"
+      >
+
+        <div class="panel-heading transactions-heading">
+          <div>
+            <h3 id="transactionsTitle">Transações recentes</h3>
+            <p>Seus registros mais recentes</p>
+          </div>
+
+          <div class="transaction-actions">
+            <span class="transaction-count" id="transactionCount">
+              0 registros
+            </span>
+
+            <button
+              type="button"
+              id="exportCsvBtn"
+              class="secondary-button"
+            >
+              Exportar CSV
+            </button>
+
+            <button
+              type="button"
+              id="exportExcelBtn"
+              class="secondary-button"
+            >
+              Exportar Excel
+            </button>
+          </div>
+        </div>
+
+        <!-- FILTROS -->
+        <div class="transaction-filters">
+
+          <div class="filter-field">
+            <label for="categoryFilter">Categoria</label>
+
+            <select id="categoryFilter">
+              <option value="">Todas as categorias</option>
+              <option value="Alimentação">Alimentação</option>
+              <option value="Transporte">Transporte</option>
+              <option value="Moradia">Moradia</option>
+              <option value="Saúde">Saúde</option>
+              <option value="Educação">Educação</option>
+              <option value="Lazer">Lazer</option>
+              <option value="Salário">Salário</option>
+              <option value="Freelance">Freelance</option>
+              <option value="Outros">Outros</option>
+            </select>
+          </div>
+
+          <div class="filter-field">
+            <label for="startDateFilter">Data inicial</label>
+            <input type="date" id="startDateFilter">
+          </div>
+
+          <div class="filter-field">
+            <label for="endDateFilter">Data final</label>
+            <input type="date" id="endDateFilter">
+          </div>
+
+          <button type="button" id="clearFiltersBtn">
+            Limpar filtros
+          </button>
+
+        </div>
+
+        <!-- TABELA DE TRANSAÇÕES -->
+        <div class="table-scroll">
+          <table>
+            <thead>
+              <tr>
+                <th scope="col">DESCRIÇÃO</th>
+                <th scope="col">CATEGORIA</th>
+                <th scope="col">DATA</th>
+                <th scope="col">TIPO</th>
+                <th scope="col">VALOR</th>
+                <th scope="col">
+                  <span class="sr-only">Ações</span>
+                </th>
+              </tr>
+            </thead>
+
+            <tbody id="transactionsBody"></tbody>
+          </table>
+        </div>
+
+        <!-- ESTADO VAZIO -->
+        <div id="emptyState" class="empty-state">
+          <span aria-hidden="true">＋</span>
+
+          <strong>Nenhuma transação por aqui</strong>
+
+          <p>
+            Cadastre sua primeira receita ou despesa para começar.
+          </p>
+
+          <button
+            class="secondary-button"
+            id="emptyAddBtn"
+            type="button"
+          >
+            Adicionar transação
+          </button>
+        </div>
+
+      </section>
+
+      <!-- METAS FINANCEIRAS -->
+      <section
+        id="goals"
+        class="content-section"
+        aria-labelledby="goalsTitle"
+      >
+        <div class="section-header goals-heading">
+          <div>
+            <h2 id="goalsTitle">Metas financeiras</h2>
+            <p>
+              Acompanhe suas economias e conquiste seus objetivos.
+            </p>
+          </div>
+
+          <button
+            type="button"
+            id="newGoalBtn"
+            class="primary-btn"
+          >
+            + Nova meta
+          </button>
+        </div>
+
+        <div id="goalsList" class="goals-grid"></div>
+
+        <p id="goalsEmpty" class="goal-empty" hidden>
+          Você ainda não cadastrou nenhuma meta.
+          Clique em "Nova meta" para começar!
+        </p>
+      </section>
+
+      <!-- RODAPÉ -->
+      <footer>
+        FinTrack <span>•</span>
+        Projeto educacional para portfólio.
+        Os dados ficam armazenados localmente no banco SQLite.
+      </footer>
+
+    </main>
+  </div>
+
+  <!-- JANELA DE CADASTRO DE TRANSAÇÃO -->
+  <dialog id="transactionDialog" aria-labelledby="transactionDialogTitle">
+
+    <form id="transactionForm">
+
+      <div class="dialog-heading">
+        <div>
+          <p class="eyebrow">NOVO REGISTRO</p>
+          <h2 id="transactionDialogTitle">Adicionar transação</h2>
+        </div>
+
+        <button
+          type="button"
+          class="close-button"
+          id="closeDialog"
+          aria-label="Fechar janela"
+        >×</button>
+      </div>
+
+      <label for="description">Descrição</label>
+      <input
+        id="description"
+        name="description"
+        type="text"
+        placeholder="Ex.: Compra no mercado"
+        maxlength="100"
+        required
+      >
+
+      <div class="form-row">
+        <div>
+          <label for="amount">Valor (R$)</label>
+          <input
+            id="amount"
+            name="amount"
+            type="number"
+            min="0.01"
+            step="0.01"
+            placeholder="0,00"
+            required
+          >
+        </div>
+
+        <div>
+          <label for="kind">Tipo</label>
+          <select id="kind" name="kind">
+            <option value="expense">Despesa</option>
+            <option value="income">Receita</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div>
+          <label for="category">Categoria</label>
+          <select id="category" name="category">
+            <option>Alimentação</option>
+            <option>Transporte</option>
+            <option>Moradia</option>
+            <option>Saúde</option>
+            <option>Educação</option>
+            <option>Lazer</option>
+            <option>Salário</option>
+            <option>Freelance</option>
+            <option>Outros</option>
+          </select>
+        </div>
+
+        <div>
+          <label for="transactionDate">Data</label>
+          <input
+            id="transactionDate"
+            name="transaction_date"
+            type="date"
+            required
+          >
+        </div>
+      </div>
+
+      <p id="formError" class="form-error" role="alert"></p>
+
+      <div class="dialog-actions">
+        <button
+          type="button"
+          class="secondary-button"
+          id="cancelDialog"
+        >
+          Cancelar
+        </button>
+
+        <button class="primary-button" type="submit">
+          Salvar transação
+        </button>
+      </div>
+
+    </form>
+  </dialog>
+
+  <!-- JANELA DE CADASTRO DE META -->
+  <dialog
+    id="goalDialog"
+    class="goal-dialog"
+    aria-labelledby="goalDialogTitle"
+  >
+    <form id="goalForm">
+
+      <div class="dialog-heading">
+        <div>
+          <p class="eyebrow">OBJETIVO FINANCEIRO</p>
+          <h2 id="goalDialogTitle">Criar nova meta</h2>
+        </div>
+
+        <button
+          type="button"
+          class="close-button"
+          id="closeGoalDialog"
+          aria-label="Fechar janela"
+        >×</button>
+      </div>
+
+      <label for="goalTitle">Nome da meta</label>
+      <input
+        id="goalTitle"
+        name="title"
+        type="text"
+        maxlength="80"
+        placeholder="Ex.: Comprar um notebook"
+        required
+      >
+
+      <div class="form-row">
+        <div>
+          <label for="goalTarget">Valor desejado (R$)</label>
+          <input
+            id="goalTarget"
+            name="target"
+            type="number"
+            min="0.01"
+            step="0.01"
+            placeholder="3000,00"
+            required
+          >
+        </div>
+
+        <div>
+          <label for="goalSaved">Valor já guardado (R$)</label>
+          <input
+            id="goalSaved"
+            name="saved"
+            type="number"
+            min="0"
+            step="0.01"
+            value="0"
+            placeholder="0,00"
+            required
+          >
+        </div>
+      </div>
+
+      <label for="goalDeadline">Prazo (opcional)</label>
+      <input
+        id="goalDeadline"
+        name="deadline"
+        type="date"
+      >
+
+      <p id="goalError" class="goal-error" role="alert" hidden></p>
+
+      <div class="goal-dialog-actions">
+        <button
+          type="button"
+          id="cancelGoalDialog"
+        >
+          Cancelar
+        </button>
+
+        <button type="submit" class="primary-btn">
+          Salvar meta
+        </button>
+      </div>
+
+    </form>
+  </dialog>
+
+  <!-- JANELA PARA ATUALIZAR META -->
+  <dialog
+    id="updateGoalDialog"
+    class="goal-dialog"
+    aria-labelledby="updateGoalTitle"
+  >
+    <form id="updateGoalForm">
+
+      <div class="dialog-heading">
+        <div>
+          <p class="eyebrow">OBJETIVO FINANCEIRO</p>
+          <h2 id="updateGoalTitle">Atualizar valor guardado</h2>
+        </div>
+
+        <button
+          type="button"
+          class="close-button"
+          id="closeUpdateGoal"
+          aria-label="Fechar janela"
+        >×</button>
+      </div>
+
+      <p id="updateGoalDescription"></p>
+
+      <label for="updateGoalSaved">Total guardado (R$)</label>
+      <input
+        type="number"
+        id="updateGoalSaved"
+        min="0"
+        step="0.01"
+        required
+      >
+
+      <p
+        id="updateGoalError"
+        class="goal-error"
+        role="alert"
+        hidden
+      ></p>
+
+      <div class="goal-dialog-actions">
+        <button
+          type="button"
+          id="cancelUpdateGoal"
+        >
+          Cancelar
+        </button>
+
+        <button type="submit" class="primary-btn">
+          Salvar valor
+        </button>
+      </div>
+
+    </form>
+  </dialog>
+
+  <!-- NOTIFICAÇÕES -->
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+  <!-- JAVASCRIPT DO PROJETO -->
+  <script src="{{ url_for('static', filename='script.js') }}"></script>
+
+</body>
+</html>

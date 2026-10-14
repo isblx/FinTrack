@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Entrar | FinTrack</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <style>
+    body {
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      background: #10131c;
+      color: #f4f6fb;
+      font-family: Arial, sans-serif;
+      padding: 20px;
+    }
+    .auth-card {
+      width: 100%;
+      max-width: 420px;
+      padding: 32px;
+      background: #191e2a;
+      border: 1px solid #2c3345;
+      border-radius: 18px;
+    }
+    .auth-card h1 { margin-bottom: 8px; }
+    .auth-card p { color: #a8b0c2; margin-bottom: 22px; }
+    .auth-card label { display: block; margin: 14px 0 7px; }
+    .auth-card input {
+      box-sizing: border-box;
+      width: 100%;
+      padding: 12px;
+      border-radius: 8px;
+      border: 1px solid #394258;
+      background: #111622;
+      color: white;
+    }
+    .auth-card button {
+      width: 100%;
+      margin-top: 18px;
+      padding: 12px;
+      border: 0;
+      border-radius: 8px;
+      background: #6658e8;
+      color: white;
+      cursor: pointer;
+    }
+    .auth-card .switch {
+      margin-top: 18px;
+      font-size: 14px;
+      cursor: pointer;
+      color: #b9b0ff;
+      text-align: center;
+    }
+    #authMessage { margin-top: 12px; color: #ff8995; }
+  </style>
+</head>
+<body>
+  <main class="auth-card">
+    <h1 id="authTitle">Entrar no FinTrack</h1>
+    <p>Organize suas finanças em um só lugar.</p>
+
+    <form id="authForm">
+      <div id="nameField" hidden>
+        <label for="name">Nome</label>
+        <input id="name" name="name" autocomplete="name">
+      </div>
+
+      <label for="email">E-mail</label>
+      <input id="email" name="email" type="email" autocomplete="email" required>
+
+      <label for="password">Senha</label>
+      <input id="password" name="password" type="password"
+             minlength="8" autocomplete="current-password" required>
+
+      <button id="submitButton" type="submit">Entrar</button>
+      <div id="authMessage" role="alert"></div>
+    </form>
+
+    <p class="switch" id="switchMode">Não tem conta? Criar conta</p>
+  </main>
+
+  <script>
+    const form = document.getElementById("authForm");
+    const nameField = document.getElementById("nameField");
+    const title = document.getElementById("authTitle");
+    const submitButton = document.getElementById("submitButton");
+    const switchMode = document.getElementById("switchMode");
+    const message = document.getElementById("authMessage");
+    const password = document.getElementById("password");
+    let registering = false;
+
+    switchMode.addEventListener("click", () => {
+      registering = !registering;
+      nameField.hidden = !registering;
+      document.getElementById("name").required = registering;
+      password.autocomplete = registering ? "new-password" : "current-password";
+      title.textContent = registering ? "Criar conta" : "Entrar no FinTrack";
+      submitButton.textContent = registering ? "Cadastrar" : "Entrar";
+      switchMode.textContent = registering
+        ? "Já tem conta? Entrar"
+        : "Não tem conta? Criar conta";
+      message.textContent = "";
+    });
+
+    form.addEventListener("submit", async event => {
+      event.preventDefault();
+      message.textContent = "";
+
+      const data = Object.fromEntries(new FormData(form).entries());
+      const endpoint = registering ? "/api/register" : "/api/login";
+
+      try {
+        const response = await fetch(endpoint, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(data)
+        });
+        const result = await response.json();
+
+        if (!response.ok) throw new Error(result.error || "Não foi possível continuar.");
+
+        if (registering) {
+          registering = false;
+          nameField.hidden = true;
+          document.getElementById("name").required = false;
+          title.textContent = "Entrar no FinTrack";
+          submitButton.textContent = "Entrar";
+          switchMode.textContent = "Não tem conta? Criar conta";
+          password.value = "";
+          message.style.color = "#6fe0ae";
+          message.textContent = "Conta criada! Agora entre com seu e-mail e senha.";
+        } else {
+          window.location.href = "/";
+        }
+      } catch (error) {
+        message.style.color = "#ff8995";
+        message.textContent = error.message;
+      }
+    });
+  </script>
+</body>
+</html>

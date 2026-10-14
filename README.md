@@ -129,15 +129,6 @@ fintrack/
     └── script.js
 ```
 
-## Próximas melhorias
-
-- Login e contas separadas por usuário
-- Filtros por categoria e período
-- Exportação CSV/Excel
-- Metas de economia
-- Testes automatizados para a API
-- Previsões com mais dados e comparação de meses
-
 ## Observação
 
 Este projeto é uma demonstração educacional. Não insira informações bancárias reais ou dados pessoais sensíveis.
